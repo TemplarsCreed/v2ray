@@ -10,7 +10,7 @@ none='\e[0m'
 # Root
 [[ $(id -u) != 0 ]] && echo -e " 哎呀……请使用 ${red}root ${none}用户运行 ${yellow}~(^_^) ${none}" && exit 1
 
-_version="v1.56"
+_version="v1.63"
 
 cmd="apt-get"
 
@@ -44,7 +44,7 @@ fi
 
 backup="/etc/v2ray/233blog_v2ray_backup.txt"
 
-if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup ]]; then
+if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup && -d /etc/v2ray/233boy/v2ray ]]; then
 
 	v2ray_transport=$(sed -n '17p' $backup)
 	v2ray_port=$(sed -n '19p' $backup)
@@ -95,6 +95,11 @@ if [ $v2ray_pid ]; then
 	v2ray_status="$green正在运行$none"
 else
 	v2ray_status="$red未在运行$none"
+fi
+if [[ $v2ray_transport == "4" && $caddy_installed ]] && [[ $caddy_pid ]]; then
+	caddy_run_status="$green正在运行$none"
+else
+	caddy_run_status="$red未在运行$none"
 fi
 
 transport=(
@@ -477,17 +482,18 @@ shadowsocks_config() {
 	done
 }
 shadowsocks_port_config() {
+	local random=$(shuf -i20001-65535 -n1)
 	while :; do
 		echo -e "请输入 "$yellow"Shadowsocks"$none" 端口 ["$magenta"1-65535"$none"]，不能和 "$yellow"V2ray"$none" 端口相同"
-		read -p "$(echo -e "(默认端口: ${cyan}6666$none):") " new_ssport
-		[ -z "$new_ssport" ] && new_ssport="6666"
+		read -p "$(echo -e "(默认端口: ${cyan}${random}$none):") " new_ssport
+		[ -z "$new_ssport" ] && new_ssport=$random
 		case $new_ssport in
 		$v2ray_port)
 			echo
 			echo -e " 不能和$cyan V2Ray 端口 $none一毛一样...."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			if [[ $v2ray_transport == "4" && $new_ssport == "80" ]] || [[ $v2ray_transport == "4" && $new_ssport == "443" ]]; then
 				echo
 				echo -e "由于你选择了 "$green"WebSocket + TLS"$none" 传输协议."
@@ -596,7 +602,7 @@ change_shadowsocks_port() {
 			echo -e " 不能和$cyan V2Ray 端口 $none一毛一样...."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			if [[ $v2ray_transport == "4" && $new_ssport == "80" ]] || [[ $v2ray_transport == "4" && $new_ssport == "443" ]]; then
 				echo
 				echo -e "由于你选择了 "$green"WebSocket + TLS"$none" 传输协议."
@@ -844,7 +850,7 @@ change_v2ray_port() {
 				echo " 哎呀...跟当前端口一毛一样呀...修改个鸡鸡哦"
 				error
 				;;
-			[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+			[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 				if [[ $shadowsocks ]] && [[ $v2ray_port_opt == $ssport ]]; then
 					echo
 					echo -e " ...不能跟$cyan Shadowsocks 端口 $none一毛一样..."
@@ -1318,18 +1324,26 @@ install_caddy() {
 		echo -e "$red 安装 Caddy 出错！" && exit 1
 	fi
 
+	setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/caddy
+
 	if [[ $systemd ]]; then
 		cp -f ${caddy_tmp}init/linux-systemd/caddy.service /lib/systemd/system/
-		sed -i "s/www-data/root/g" /lib/systemd/system/caddy.service
+		# sed -i "s/www-data/root/g" /lib/systemd/system/caddy.service
 		systemctl enable caddy
 	else
 		cp -f ${caddy_tmp}init/linux-sysvinit/caddy /etc/init.d/caddy
-		sed -i "s/www-data/root/g" /etc/init.d/caddy
+		# sed -i "s/www-data/root/g" /etc/init.d/caddy
 		chmod +x /etc/init.d/caddy
 		update-rc.d -f caddy defaults
 	fi
 
 	mkdir -p /etc/ssl/caddy
+
+	if [ -z "$(grep www-data /etc/passwd)" ]; then
+		useradd -M -s /usr/sbin/nologin www-data
+	fi
+	chown -R www-data.www-data /etc/ssl/caddy
+
 	mkdir -p /etc/caddy/
 	rm -rf $caddy_tmp
 
@@ -1377,7 +1391,7 @@ v2ray_dynamic_port_start() {
 			echo " 不能和 V2Ray 端口一毛一样...."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			if [[ $shadowsocks ]] && [[ $v2ray_dynamic_port_start_input == $ssport ]]; then
 				echo
 				echo " 不能和 Shadowsocks 端口一毛一样...."
@@ -1415,7 +1429,7 @@ v2ray_dynamic_port_end() {
 		read -p "$(echo -e "(默认结束端口: ${cyan}20000$none):")" v2ray_dynamic_port_end_input
 		[ -z $v2ray_dynamic_port_end_input ] && v2ray_dynamic_port_end_input=20000
 		case $v2ray_dynamic_port_end_input in
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 
 			if [[ $v2ray_dynamic_port_end_input -le $v2ray_dynamic_port_start_input ]]; then
 				echo
@@ -1506,7 +1520,7 @@ change_v2ray_dynamic_port_start() {
 			echo " 不能和 V2Ray 端口一毛一样...."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			if [[ $shadowsocks ]] && [[ $v2ray_dynamic_port_start_input == $ssport ]]; then
 				echo
 				echo " 不能和 Shadowsocks 端口一毛一样...."
@@ -1544,7 +1558,7 @@ change_v2ray_dynamic_port_end() {
 		read -p "$(echo -e "(当前动态结束端口: ${cyan}$v2ray_dynamicPort_end$none):")" v2ray_dynamic_port_end_input
 		[ -z $v2ray_dynamic_port_end_input ] && error && continue
 		case $v2ray_dynamic_port_end_input in
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 
 			if [[ $v2ray_dynamic_port_end_input -le $v2ray_dynamic_port_start_input ]]; then
 				echo
@@ -2488,8 +2502,8 @@ open_port() {
 		iptables-save >/etc/iptables.rules.v4
 		ip6tables-save >/etc/iptables.rules.v6
 	else
-		service iptables save
-		service ip6tables save
+		service iptables save >/dev/null 2>&1
+		service ip6tables save >/dev/null 2>&1
 	fi
 
 }
@@ -2521,8 +2535,8 @@ del_port() {
 		iptables-save >/etc/iptables.rules.v4
 		ip6tables-save >/etc/iptables.rules.v6
 	else
-		service iptables save
-		service ip6tables save
+		service iptables save >/dev/null 2>&1
+		service ip6tables save >/dev/null 2>&1
 	fi
 }
 update() {
@@ -3609,7 +3623,11 @@ Q | ssqr)
 	;;
 status)
 	echo
-	echo -e " V2Ray 状态: $v2ray_status"
+	if [[ $v2ray_transport == "4" && $caddy_installed ]]; then
+		echo -e " V2Ray 状态: $v2ray_status  /  Caddy 状态: $caddy_run_status"
+	else
+		echo -e " V2Ray 状态: $v2ray_status"
+	fi
 	echo
 	;;
 start)
@@ -3620,6 +3638,12 @@ stop)
 	;;
 restart)
 	restart_v2ray
+	;;
+reload)
+	config
+	clear
+	view_v2ray_config_info
+	download_v2ray_config_ask
 	;;
 log)
 	view_v2ray_log

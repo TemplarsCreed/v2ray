@@ -114,12 +114,13 @@ v2ray_config() {
 }
 v2ray_port_config() {
 	if [[ $v2ray_transport_opt -ne 4 && $v2ray_transport_opt -lt 9 ]]; then
+		local random=$(shuf -i20001-65535 -n1)
 		while :; do
 			echo -e "请输入 "$yellow"V2Ray"$none" 端口 ["$magenta"1-65535"$none"]"
-			read -p "$(echo -e "(默认端口: ${cyan}2333$none):")" v2ray_port
-			[ -z "$v2ray_port" ] && v2ray_port="2333"
+			read -p "$(echo -e "(默认端口: ${cyan}${random}$none):")" v2ray_port
+			[ -z "$v2ray_port" ] && v2ray_port=$random
 			case $v2ray_port in
-			[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+			[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 				echo
 				echo
 				echo -e "$yellow V2Ray 端口 = $cyan$v2ray_port$none"
@@ -147,13 +148,13 @@ v2ray_port_config() {
 v2ray_dynamic_port_config() {
 
 	echo
-
+	local random=$(shuf -i20001-65535 -n1)
 	while :; do
 		echo -e "请输入 "$yellow"V2Ray"$none" 端口 ["$magenta"1-65535"$none"]"
-		read -p "$(echo -e "(默认端口: ${cyan}2333$none):")" v2ray_port
-		[ -z "$v2ray_port" ] && v2ray_port="2333"
+		read -p "$(echo -e "(默认端口: ${cyan}${random}$none):")" v2ray_port
+		[ -z "$v2ray_port" ] && v2ray_port=$random
 		case $v2ray_port in
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			echo
 			echo
 			echo -e "$yellow V2Ray 端口 = $cyan$v2ray_port$none"
@@ -182,7 +183,7 @@ v2ray_dynamic_port_start() {
 			echo " 不能和 V2Ray 端口一毛一样...."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			echo
 			echo
 			echo -e "$yellow V2Ray 动态端口开始 = $cyan$v2ray_dynamic_port_start_input$none"
@@ -210,7 +211,7 @@ v2ray_dynamic_port_end() {
 		read -p "$(echo -e "(默认结束端口: ${cyan}20000$none):")" v2ray_dynamic_port_end_input
 		[ -z $v2ray_dynamic_port_end_input ] && v2ray_dynamic_port_end_input=20000
 		case $v2ray_dynamic_port_end_input in
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 
 			if [[ $v2ray_dynamic_port_end_input -le $v2ray_dynamic_port_start_input ]]; then
 				echo
@@ -241,11 +242,11 @@ v2ray_dynamic_port_end() {
 ws_config() {
 
 	echo
-
+	local random=$(shuf -i20001-65535 -n1)
 	while :; do
 		echo -e "请输入 "$yellow"V2Ray"$none" 端口 ["$magenta"1-65535"$none"]，不能选择 "$magenta"80"$none" 或 "$magenta"443"$none" 端口"
-		read -p "$(echo -e "(默认端口: ${cyan}2333$none):")" v2ray_port
-		[ -z "$v2ray_port" ] && v2ray_port="2333"
+		read -p "$(echo -e "(默认端口: ${cyan}${random}$none):")" v2ray_port
+		[ -z "$v2ray_port" ] && v2ray_port=$random
 		case $v2ray_port in
 		80)
 			echo
@@ -257,7 +258,7 @@ ws_config() {
 			echo " ..都说了不能选择 433 端口了咯....."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			echo
 			echo
 			echo -e "$yellow V2Ray 端口 = $cyan$v2ray_port$none"
@@ -492,17 +493,18 @@ shadowsocks_config() {
 }
 
 shadowsocks_port_config() {
+	local random=$(shuf -i20001-65535 -n1)
 	while :; do
 		echo -e "请输入 "$yellow"Shadowsocks"$none" 端口 ["$magenta"1-65535"$none"]，不能和 "$yellow"V2Ray"$none" 端口相同"
-		read -p "$(echo -e "(默认端口: ${cyan}6666$none):") " ssport
-		[ -z "$ssport" ] && ssport="6666"
+		read -p "$(echo -e "(默认端口: ${cyan}${random}$none):") " ssport
+		[ -z "$ssport" ] && ssport=$random
 		case $ssport in
 		$v2ray_port)
 			echo
 			echo " 不能和 V2Ray 端口一毛一样...."
 			error
 			;;
-		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | [1-6][0-5][0-5][0-3][0-5])
+		[1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
 			if [[ $v2ray_transport_opt == "4" && $ssport == "80" ]] || [[ $v2ray_transport_opt == "4" && $ssport == "443" ]]; then
 				echo
 				echo -e "由于你选择了 "$green"WebSocket + TLS"$none" 传输协议."
@@ -705,18 +707,26 @@ install_caddy() {
 		echo -e "$red 安装 Caddy 出错！" && exit 1
 	fi
 
+	setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/caddy
+
 	if [[ $systemd ]]; then
 		cp -f ${caddy_tmp}init/linux-systemd/caddy.service /lib/systemd/system/
-		sed -i "s/www-data/root/g" /lib/systemd/system/caddy.service
+		# sed -i "s/www-data/root/g" /lib/systemd/system/caddy.service
 		systemctl enable caddy
 	else
 		cp -f ${caddy_tmp}init/linux-sysvinit/caddy /etc/init.d/caddy
-		sed -i "s/www-data/root/g" /etc/init.d/caddy
+		# sed -i "s/www-data/root/g" /etc/init.d/caddy
 		chmod +x /etc/init.d/caddy
 		update-rc.d -f caddy defaults
 	fi
 
 	mkdir -p /etc/ssl/caddy
+
+	if [ -z "$(grep www-data /etc/passwd)" ]; then
+		useradd -M -s /usr/sbin/nologin www-data
+	fi
+	chown -R www-data.www-data /etc/ssl/caddy
+
 	mkdir -p /etc/caddy/
 	rm -rf $caddy_tmp
 	caddy_config
@@ -761,11 +771,26 @@ install_v2ray() {
 	# 	$cmd install -y lrzsz git zip unzip curl wget qrencode bind-utils iptables-services
 	# fi
 	if [[ $cmd == "apt-get" ]]; then
-		$cmd install -y lrzsz git zip unzip curl wget qrencode
+		$cmd install -y lrzsz git zip unzip curl wget qrencode libcap2-bin
 	else
-		$cmd install -y lrzsz git zip unzip curl wget qrencode iptables-services
+		$cmd install -y lrzsz git zip unzip curl wget qrencode libcap iptables-services
 	fi
 	ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+	if [[ $local_install ]]; then
+		if [[ ! -d $(pwd)/config ]]; then
+			echo
+			echo -e "$red 哎呀呀...安装失败了咯...$none"
+			echo
+			echo -e " 请确保你有完整的上传 233blog.com V2Ray 一键安装脚本 & 管理脚本到当前 ${green}$(pwd) $none目录下"
+			echo
+			exit 1
+		fi
+		mkdir -p /etc/v2ray/233boy/v2ray
+		cp -rf $(pwd)/* /etc/v2ray/233boy/v2ray
+	else
+		git clone https://github.com/233boy/v2ray /etc/v2ray/233boy/v2ray
+	fi
 
 	[ -d /tmp/v2ray ] && rm -rf /tmp/v2ray
 	mkdir -p /tmp/v2ray
@@ -801,13 +826,6 @@ install_v2ray() {
 	mkdir -p /etc/v2ray
 
 	rm -rf /tmp/v2ray
-
-	if [[ $local_install ]]; then
-		mkdir -p /etc/v2ray/233boy/v2ray
-		cp -rf $(pwd)/* /etc/v2ray/233boy/v2ray
-	else
-		git clone https://github.com/233boy/v2ray /etc/v2ray/233boy/v2ray
-	fi
 
 	if [ $shadowsocks ]; then
 		if [[ $is_blocked_ad ]]; then
@@ -1004,8 +1022,8 @@ open_port() {
 		iptables-save >/etc/iptables.rules.v4
 		ip6tables-save >/etc/iptables.rules.v6
 	else
-		service iptables save
-		service ip6tables save
+		service iptables save >/dev/null 2>&1
+		service ip6tables save >/dev/null 2>&1
 	fi
 }
 del_port() {
@@ -1041,8 +1059,8 @@ del_port() {
 		iptables-save >/etc/iptables.rules.v4
 		ip6tables-save >/etc/iptables.rules.v6
 	else
-		service iptables save
-		service ip6tables save
+		service iptables save >/dev/null 2>&1
+		service ip6tables save >/dev/null 2>&1
 	fi
 
 }
@@ -1594,7 +1612,7 @@ get_qr_link() {
 
 }
 install() {
-	if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup && -f /lib/systemd/system/v2ray.service ]]; then
+	if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup && -d /etc/v2ray/233boy/v2ray ]]; then
 		echo
 		echo " 大佬...你已经安装 V2Ray 啦...无需重新安装"
 		echo
@@ -1617,7 +1635,7 @@ install() {
 }
 uninstall() {
 
-	if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup ]]; then
+	if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup && -d /etc/v2ray/233boy/v2ray ]]; then
 		while :; do
 			echo
 			read -p "$(echo -e "是否卸载 ${yellow}V2Ray$none [${magenta}Y/N$none]:")" uninstall_v2ray_ask
