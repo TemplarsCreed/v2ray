@@ -10,7 +10,7 @@ none='\e[0m'
 # Root
 [[ $(id -u) != 0 ]] && echo -e " 哎呀……请使用 ${red}root ${none}用户运行 ${yellow}~(^_^) ${none}" && exit 1
 
-_version="v1.63"
+_version="v1.69"
 
 cmd="apt-get"
 
@@ -60,6 +60,7 @@ if [[ -f /usr/bin/v2ray/v2ray && -f /etc/v2ray/config.json ]] && [[ -f $backup &
 	blocked_ad_status=$(sed -n '39p' $backup)
 	ws_path_status=$(sed -n '41p' $backup)
 	ws_path=$(sed -n '43p' $backup)
+	alterId=$(sed -n '45p' $backup)
 
 	v2ray_ver=$(/usr/bin/v2ray/v2ray -version | head -n 1 | cut -d " " -f2)
 
@@ -187,7 +188,7 @@ create_vmess_URL_config() {
 			"add": "${domain}",
 			"port": "443",
 			"id": "${v2ray_id}",
-			"aid": "233",
+			"aid": "${alterId}",
 			"net": "ws",
 			"type": "none",
 			"host": "${host}",
@@ -202,7 +203,7 @@ create_vmess_URL_config() {
 			"add": "${ip}",
 			"port": "${v2ray_port}",
 			"id": "${v2ray_id}",
-			"aid": "233",
+			"aid": "${alterId}",
 			"net": "${net}",
 			"type": "${header}",
 			"host": "${host}",
@@ -230,7 +231,7 @@ view_v2ray_config_info() {
 		echo
 		echo -e "$yellow 用户ID (User ID / UUID) = $cyan${v2ray_id}$none"
 		echo
-		echo -e "$yellow 额外ID (Alter Id) = ${cyan}233${none}"
+		echo -e "$yellow 额外ID (Alter Id) = ${cyan}${alterId}${none}"
 		echo
 		echo -e "$yellow 传输协议 (Network) = ${cyan}${network}$none"
 		echo
@@ -257,7 +258,7 @@ view_v2ray_config_info() {
 		echo
 		echo -e "$yellow 用户ID (User ID / UUID) = $cyan${v2ray_id}$none"
 		echo
-		echo -e "$yellow 额外ID (Alter Id) = ${cyan}233${none}"
+		echo -e "$yellow 额外ID (Alter Id) = ${cyan}${alterId}${none}"
 		echo
 		echo -e "$yellow 传输协议 (Network) = ${cyan}${network}$none"
 		echo
@@ -823,6 +824,10 @@ change_v2ray_config() {
 				blocked_hosts
 				break
 				;;
+			[Dd] | [Aa][Ii] | 233 | 233[Bb][Ll][Oo][Gg] | 233[Bb][Ll][Oo][Gg].[Cc][Oo][Mm] | 233[Bb][Oo][Yy] | [Aa][Ll][Tt][Ee][Rr][Ii][Dd])
+				change_v2ray_alterId
+				break
+				;;
 			*)
 				error
 				;;
@@ -1301,6 +1306,13 @@ proxy_site_config() {
 }
 
 install_caddy() {
+	if [[ $cmd == "yum" ]]; then
+		[[ $(pgrep "httpd") ]] && systemctl stop httpd
+		[[ $(command -v httpd) ]] && yum remove httpd -y
+	else
+		[[ $(pgrep "apache2") ]] && service apache2 stop
+		[[ $(command -v apache2) ]] && apt-get remove apache2* -y
+	fi
 	local caddy_tmp="/tmp/install_caddy/"
 	local caddy_tmp_file="/tmp/install_caddy/caddy.tar.gz"
 	if [[ $sys_bit == "i386" || $sys_bit == "i686" ]]; then
@@ -1356,6 +1368,7 @@ caddy_config() {
 $domain {
     tls ${email}@gmail.com
     gzip
+	timeouts none
     proxy / $proxy_site {
         without /${ws_path}
     }
@@ -1369,6 +1382,7 @@ $domain {
 		cat >/etc/caddy/Caddyfile <<-EOF
 $domain {
     tls ${email}@gmail.com
+	timeouts none
 	proxy / 127.0.0.1:${v2ray_port} {
 		websocket
 	}
@@ -1998,6 +2012,34 @@ blocked_hosts() {
 	done
 
 }
+change_v2ray_alterId() {
+	echo
+	while :; do
+		echo -e "请输入 ${yellow}alterId${none} 的数值 [${magenta}0-65535$none]"
+		read -p "$(echo -e "(当前数值是: ${cyan}$alterId$none):") " new_alterId
+		[[ -z $new_alterId ]] && error && continue
+		case $new_alterId in
+		0 | [1-9] | [1-9][0-9] | [1-9][0-9][0-9] | [1-9][0-9][0-9][0-9] | [1-5][0-9][0-9][0-9][0-9] | 6[0-4][0-9][0-9][0-9] | 65[0-4][0-9][0-9] | 655[0-3][0-5])
+			echo
+			echo
+			echo -e "$yellow alterId = $cyan$new_alterId$none"
+			echo "----------------------------------------------------------------"
+			echo
+			pause
+			sed -i "45s/$alterId/$new_alterId/" $backup
+			alterId=$new_alterId
+			config
+			clear
+			view_v2ray_config_info
+			download_v2ray_config_ask
+			break
+			;;
+		*)
+			error
+			;;
+		esac
+	done
+}
 v2ray_service() {
 	while :; do
 		echo
@@ -2225,7 +2267,7 @@ create_v2ray_config_text() {
 		echo
 		echo "用户ID (User ID / UUID) = ${v2ray_id}"
 		echo
-		echo "额外ID (Alter Id) = 233"
+		echo "额外ID (Alter Id) = ${alterId}"
 		echo
 		echo "传输协议 (Network) = ${network}"
 		echo
@@ -2252,7 +2294,7 @@ create_v2ray_config_text() {
 		echo
 		echo "用户ID (User ID / UUID) = ${v2ray_id}"
 		echo
-		echo "额外ID (Alter Id) = 233"
+		echo "额外ID (Alter Id) = ${alterId}"
 		echo
 		echo "传输协议 (Network) = ${network}"
 		echo
@@ -2346,7 +2388,7 @@ get_v2ray_config_qr_link() {
 		if [[ $ios_qr && $link3 ]]; then
 			echo -e "$yellow 适用于 Pepi / ShadowRay = $cyan${link3}$none"
 			echo
-			echo " 请在 Pepi / ShadowRay 配置界面将 Alter Id 设置为 233 (如果你使用 Pepi / ShadowRay)"
+			echo " 请在 Pepi / ShadowRay 配置界面将 Alter Id 设置为 ${alterId} (如果你使用 Pepi / ShadowRay)"
 			if [[ $v2ray_transport == 4 ]]; then
 				echo
 				echo " 请在 Pepi / ShadowRay 配置界面打开 TLS (Enable TLS) (如果你使用 Pepi / ShadowRay)"
@@ -2736,7 +2778,7 @@ uninstall_v2ray() {
 		echo
 		echo "如果你觉得这个脚本有哪些地方不够好的话...请告诉我"
 		echo
-		echo "反馈问题: https://github.com/233boy/v2ray/issus"
+		echo "反馈问题: https://github.com/233boy/v2ray/issues"
 		echo
 
 	elif [[ $is_uninstall_v2ray ]]; then
@@ -2780,7 +2822,7 @@ uninstall_v2ray() {
 		echo
 		echo "如果你觉得这个脚本有哪些地方不够好的话...请告诉我"
 		echo
-		echo "反馈问题: https://github.com/233boy/v2ray/issus"
+		echo "反馈问题: https://github.com/233boy/v2ray/issues"
 		echo
 	fi
 }
@@ -3362,10 +3404,10 @@ config() {
 
 	fi
 
-	sed -i "8s/2333/$v2ray_port/; 14s/$old_id/$v2ray_id/" $v2ray_server_config
+	sed -i "8s/2333/$v2ray_port/; 14s/$old_id/$v2ray_id/; 16s/233/$alterId/" $v2ray_server_config
 
 	if [[ $v2ray_transport_opt -eq 4 || $v2ray_transport -eq 4 ]]; then
-		sed -i "s/233blog.com/$domain/; 22s/2333/443/; 25s/$old_id/$v2ray_id/" $v2ray_client_config
+		sed -i "s/233blog.com/$domain/; 22s/2333/443/; 25s/$old_id/$v2ray_id/; 26s/233/$alterId/" $v2ray_client_config
 		if [[ $is_ws_path ]]; then
 			sed -i "41s/233blog/$ws_path/" $v2ray_client_config
 		else
@@ -3373,7 +3415,7 @@ config() {
 		fi
 	else
 		[[ -z $ip ]] && get_ip
-		sed -i "s/233blog.com/$ip/; 22s/2333/$v2ray_port/; 25s/$old_id/$v2ray_id/" $v2ray_client_config
+		sed -i "s/233blog.com/$ip/; 22s/2333/$v2ray_port/; 25s/$old_id/$v2ray_id/; 26s/233/$alterId/" $v2ray_client_config
 	fi
 
 	zip -q -r -j --password "233blog.com" /etc/v2ray/233blog_v2ray.zip $v2ray_client_config
@@ -3383,6 +3425,15 @@ config() {
 		sed -i "31s/false/true/; 33s/$ssport/$new_ssport/; 35s/$sspass/$new_sspass/; 37s/$ssciphers/$new_ssciphers/" $backup
 	fi
 
+	if [[ $v2ray_port == "80" ]]; then
+		if [[ $cmd == "yum" ]]; then
+			[[ $(pgrep "httpd") ]] && systemctl stop httpd >/dev/null 2>&1
+			[[ $(command -v httpd) ]] && yum remove httpd -y >/dev/null 2>&1
+		else
+			[[ $(pgrep "apache2") ]] && service apache2 stop >/dev/null 2>&1
+			[[ $(command -v apache2) ]] && apt-get remove apache2* -y >/dev/null 2>&1
+		fi
+	fi
 	do_service restart v2ray
 }
 _boom_() {
@@ -3641,6 +3692,7 @@ restart)
 	;;
 reload)
 	config
+	[[ $v2ray_transport == "4" && $caddy_installed ]] && caddy_config
 	clear
 	view_v2ray_config_info
 	download_v2ray_config_ask
